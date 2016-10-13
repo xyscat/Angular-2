@@ -2,6 +2,9 @@ import { Component } from '@angular/core';
 
 import { Hero } from './hero';
 
+// 导入英雄服务 从该文件里
+import { HeroService } from './hero.service';
+
 const HEROES: Hero[] = [
   { id: 11, name: 'Mr. Nice' },
   { id: 12, name: 'Narco' },
@@ -91,6 +94,8 @@ export class AppComponent {
   }
 }
 
+// 注入英雄服务，通过构造器
+constructor(private heroService: HeroService) { }
 
 /*
 Copyright 2016 Google Inc. All Rights Reserved.

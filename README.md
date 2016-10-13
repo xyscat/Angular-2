@@ -1229,3 +1229,231 @@ my-hero-detail 是我们在`HeroDetailComponent` 组件元数据设置的 `selec
 我们在 AppComponent 将获取数据。
 
 待续…… 哈哈，干的漂亮！ 
+
+
+# 服务
+
+我们创建一个可重用的服务去管理我们的英雄数据请求。
+
+- 服务
+
+项目在不断丰富并且在后面我们期望添加更多的组件。
+
+多组件需要有权使用英雄数据并且我们不想去一次次复制和粘贴相同的代码。所以，我们创建独立的可重用的数据服务并学习在需要的时候注入到组件。
+
+给一个分离的服务 重构数据权限 保持组件的瘦和专注支持这个视图。它也使得使用 mock 本地服务 单元测试组件。
+
+因为数据服务总是异步的，我们将完成这节 使用 基于承诺的版本的数据服务。
+
+运行结果示例 地址
+
+- 上节离开的地方
+
+- `npm install`
+
+- 创建一个英雄服务
+
+我们的客户已经分享了app 更高需要的版本。他们说他们想要展示英雄 在不同的页面以不同方式。我们应已经能从列表选择英雄。我们将添加一个仪表盘在英雄的顶部 并 创建一个分离的视图去编辑英雄详情。所有的视图都需要英雄数据。
+
+此时 `AppComponent` 定义了 mock 英雄为显示。我们有至少两个对象。第一个：定义英雄不是组件的工作，第二，我们不能简单分享英雄列表在不同的组件和视图。
+
+我们能重构这个英雄数据采集业务 为 一个独立的服务，它提供英雄，并分享需要的英雄在各组件分享服务。
+
+- 创建英雄服务
+
+在 `app/` 文件夹下 创建 `hero.service.ts`
+
+我们已经采用了一个规则 ，在规则里 我们 拼写服务的名称 用较低 在 `.service`后面。如果这个服务的名字是多个字的，我们拼写这个根文件名 在 较低的 【dash-case】。 `SpecialSuperHeroService` 将会被定义在 `special-super-hero.service.ts` 文件。
+
+我么命名 `HeroService` 类 并且为其他组件导入它。
+
+```
+
+	@Injectable()
+	export class HeroService{
+		
+	}
+
+```
+
+- 可注入的服务
+
+观察到我们导入 angular `Injectable` 函数和声明了函数 作为 `@Injectable()` 装饰器。
+
+不要忘记圆括号！忽视他们会导致一个很难被发现的错误。
+
+TS 看 `@Injectable()` 装饰器 并发出关于我们服务的元数据，angular 可能需要在这个服务注入其他的依赖。
+
+此时，`HeroService` 不需要任何依赖。从一致性和面向未来出发 声明 `@Injectable()` 装饰器 是一个最佳实践。
+
+- 得到英雄
+
+添加 `getHeroes` 桩
+
+```
+
+	@Injectable()
+	export class HeroService{
+		// 桩
+		getHeroes() : void {}
+	}
+
+
+```
+
+我们停一下止，讲一个重要的一点。
+
+服务的用户不知道服务是怎样获得数据的。我们的 `HeroService` 能从任何地方获得 `Hero` 数据。它能从 web 服务或本地缓存 或 模拟服务器 mock 数据源 获得数据。
+
+这即使 从组件 移除数据存取 的美好。我们能改变关于实现的想法。无论什么原因，没有触摸任何一个需要英雄的组件。
+
+- mock 英雄数据
+
+我们已经在 `AppComponent` 里 mock 了 `Hero` 数据。它不属于哪儿也不属于这儿。我们将把数据移动到它自己的文件。
+
+从 `app.component.ts` 截取 `HEROES` 数组并粘贴到一个新文件 `app/mock-heroes.ts`。我们复制 `import {Hero} …` 因为英雄数组使用 `Hero` 类。
+
+```
+
+	// hero 使用了 Hero 类
+	import { Hero } from './hero';
+	
+	export const HEROES: Hero[] = [
+	  {id: 11, name: 'Mr. Nice'},
+	  {id: 12, name: 'Narco'},
+	  {id: 13, name: 'Bombasto'},
+	  {id: 14, name: 'Celeritas'},
+	  {id: 15, name: 'Magneta'},
+	  {id: 16, name: 'RubberMan'},
+	  {id: 17, name: 'Dynama'},
+	  {id: 18, name: 'Dr IQ'},
+	  {id: 19, name: 'Magma'},
+	  {id: 20, name: 'Tornado'}
+	];
+
+```
+
+我们导入 `HEROES` 常量所以我们能导入它任何地方，比如我们的 `HeroService`。
+
+同时，回到 `app.component.ts` ， 我们截取了 `HEROES` 数组，我们遗留了一个没有初始化的 `heroes` 属性。
+
+```
+
+	heroes: Hero[];
+
+
+`` 
+
+- 返回 mocked 英雄
+
+回到 `HeroService` 我们 导入了 mock `HEROES` 并且从 `getHeroes` 方法返回它。我们的 `HeroService` 是这样的：
+
+```
+
+	/*
+	 * hero.service.ts
+	 * 共享的英雄服务
+	*/
+	
+	import { Component } from '@angular/core';
+	
+	import { Hero } from './hero';
+	
+	import { HEROES } from './mock-heroes';
+	
+	@Injectable()
+	export class HeroService{
+		// 桩
+		getHeroes() : Hero[] {
+			return HEROES;
+		}
+	}
+
+```
+
+- 使用英雄服务
+
+我们准备好使用 `HeroSevice` 在其他组件，开始在我们的 `AppComponent`。
+
+我们开始，如同往常，导入我们想要使用的， `HeroService`
+
+```
+
+	// 导入英雄服务 从该文件里
+	import { HeroService } from './hero.service';
+
+```
+
+导入服务后允许我们在代码里引用它。`AppComponent` 怎样获取一个具体的执行时间 `HeroService` 实例？
+
+- 我们新创建英雄服务？没门！绝不！
+
+我们可以使用 new 创建一个 `HeroService` 的新实例：
+
+```
+
+	heroService = new HeroService(); // don't do this
+
+
+```
+
+这一做法不好有下列原因：
+
+- 我们的组件已经知道怎样去创建一个 `HeroService`。如果我们改变 `HeroService` 构造函数，我们将不得不去找到每个地方我们创建了服务的去修改它。这样来来回回该代码会容易出错，增加了测试的负担。
+
+- 我们每次创建新的服务都要使用 `new` 。如果服务应该缓存英雄并分享缓存给别的组件呢？我们不能做到。
+
+- 我们锁定 AppComponent 到 `HeroService` 的一个具体的实现。它很难去切换不同的具体的场景。我们能离线操作吗？我们需要不同的 mocked 版本 在测试室？不容易。
+
+如果……如果……
+
+我们知道了。真的。但是避免这个问题是如此简单至极。没有理由做错。
+
+> 实在不太懂。
+
+- 注入英雄服务
+
+两行代替一行，创建：
+
+我们添加一个构造器，它定义一个私有属性
+
+我们添加到 组件的 `providers` 元数据
+
+这儿是构造器：
+
+```
+
+	// 注入英雄服务，通过构造器
+	constructor(private heroService: HeroService) { }
+
+```
+
+这个构造器本身不做啥事。参数同时定义一个私有 `heroService` 属性 并且 识别它作为 `HeroSerivce` 注入部位。
+
+现在 angular 知道了去供给一个 `HeroService` 实例 当她创建新的 `AppComponent`。
+
+【链接】了解更多关于 依赖注入 在 依赖注入 那一节。
+
+注入器还不知道怎么创建一个 `HeroService`。如果我们运行代码，angular会报错：
+
+```
+
+	EXCEPTION: No provider for HeroService! (AppComponent -> HeroService)
+
+
+```
+
+我们必须教注入器怎样去完成一个 `HeroService` 通过注册一个 `HeroService` 提供程序。通过添加下面 `providers` 数组属性给组件元数据的底部 用 `@Component` 。
+
+```
+
+	providers: [HeroService]
+
+
+```
+
+`providers` 数组告诉 angular 去创建一个新的 `HeroService` 实例，当它创建一个新的 `AppComponent` 的时候。`AppComponent`  能使用服务去获取英雄并且组件树的每个子组件。
+
+- AppComponent 里的 getHeroes
+
+
